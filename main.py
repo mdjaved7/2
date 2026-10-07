@@ -8,7 +8,7 @@ import subprocess
 # ==========================================
 API_ID = 34801155                      # Apna API ID dalein (bina quotes ke)
 API_HASH = "d7846c4d0f2c343dd5b67c80d45409e8"           # Apna API HASH dalein
-BOT_TOKEN = "8808145635:AAE4KqnrT-7hDSoW7svkVvsfthj9NINN5x0"         # Apna Bot Token dalein
+BOT_TOKEN = "8808145635:AAFMYUPeNiwBaUegXrvv5oY9LTkSNQFUhYk"         # Apna Bot Token dalein
 CHANNEL_ID = -1003545857457          # Apne Channel ka ID yahan dalein
 # ==========================================
 
