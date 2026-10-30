@@ -1,6 +1,7 @@
 import os
 from flask import Flask, request, render_template_string, jsonify
 import requests
+from deep_translator import GoogleTranslator
 
 app = Flask(__name__)
 
@@ -110,28 +111,32 @@ def submit_comment():
     user_id = data.get('user_id')
     user_name = data.get('user_name')
 
-    # Admin ko Telegram par image aur comment bhejna
-    caption = f"💬 **New Comment on Story:** {title}\n\n👤 **User:** {user_name} (<code>{user_id}</code>)\n📝 **Comment:** {comment}\n\n👉 *Reply karne ke liye is message par Reply karein.*"
+    # Automatic translation of user comment into Hindi using Google Translator
+    try:
+        translated_comment = GoogleTranslator(source='auto', target='hi').translate(comment)
+    except Exception as e:
+        translated_comment = comment  # Agar translation fail ho toh original comment bhej dega
+
+    # Admin ko Telegram par clean Hindi message bina star symbols ke
+    caption = f"💬 Kahani par naya comment: {title}\n\n👤 User: {user_name} ({user_id})\n📝 Comment (Translated): {translated_comment}\n\n👉 Jawab dene ke liye is message par Reply karein."
     
     if image:
         telegram_url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto"
         payload = {
             "chat_id": ADMIN_CHAT_ID,
             "photo": image,
-            "caption": caption,
-            "parse_mode": "HTML"
+            "caption": caption
         }
     else:
         telegram_url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
         payload = {
             "chat_id": ADMIN_CHAT_ID,
-            "text": caption,
-            "parse_mode": "HTML"
+            "text": caption
         }
 
     response = requests.post(telegram_url, json=payload)
     
-    # Save mapping for admin replies (optional database handling)
+    # Save mapping for admin replies
     if response.status_code == 200:
         res_data = response.json()
         msg_id = res_data['result']['message_id']
@@ -150,16 +155,15 @@ def telegram_webhook():
         if admin_id == ADMIN_CHAT_ID:
             replied_msg_id = message["reply_to_message"]["message_id"]
             reply_text = message.get("text", "")
+            admin_msg_id = message.get("message_id") # User ke paas reply karte waqt reference ke liye
             
-            # Check if we have the user ID for this message
             target_user_id = COMMENTS_DB.get(replied_msg_id)
             if target_user_id:
-                # Send reply back to user
                 send_url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
                 payload = {
                     "chat_id": target_user_id,
-                    "text": f"📩 **Admin ka reply aapke comment par:**\n\n{reply_text}",
-                    "parse_mode": "HTML"
+                    "text": f"📩 Aapke comment par admin ka jawab:\n\n{reply_text}",
+                    "reply_to_message_id": admin_msg_id  # Yahan fix kar diya hai taaki reply properly dikhe
                 }
                 requests.post(send_url, json=payload)
                 
@@ -167,3 +171,4 @@ def telegram_webhook():
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)
+    
