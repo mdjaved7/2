@@ -155,15 +155,13 @@ def telegram_webhook():
         if admin_id == ADMIN_CHAT_ID:
             replied_msg_id = message["reply_to_message"]["message_id"]
             reply_text = message.get("text", "")
-            admin_msg_id = message.get("message_id") # User ke paas reply karte waqt reference ke liye
             
             target_user_id = COMMENTS_DB.get(replied_msg_id)
             if target_user_id:
                 send_url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
                 payload = {
                     "chat_id": target_user_id,
-                    "text": f"📩 Aapke comment par admin ka jawab:\n\n{reply_text}",
-                    "reply_to_message_id": admin_msg_id  # Yahan fix kar diya hai taaki reply properly dikhe
+                    "text": f"📩 Aapke comment par admin ka jawab:\n\n{reply_text}"
                 }
                 requests.post(send_url, json=payload)
                 
